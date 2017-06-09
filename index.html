@@ -1,0 +1,244 @@
+﻿<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="kyc/themes/jquery.mobile.icons.min.css" />
+    <link rel="stylesheet" href="kyc/themes/jquery.mobile.structure-1.4.5.min.css">
+    <link rel="stylesheet" href="kyc/jquery.mobile-1.4.5.min.css">
+    <link rel="stylesheet" href="kyc/astronomy.css">
+    <script src="kyc/jquery-1.11.1.min.js"></script>
+    <script src="kyc/jquery.mobile-1.4.5.min.js"></script>
+    <script src="kyc/kyc_public.js"></script>
+    <script src="kyc/kyc_astronomy.js"></script>
+    <script src="cordova.js"></script>
+
+    <title>登錄</title>
+
+    <script language="JavaScript">
+      var kyc_csn = "";
+      function onLoad() {
+        document.addEventListener("deviceready", onDeviceReady, false);
+       }
+      //Cordova加載完成會觸發
+      function onDeviceReady() {
+        $("<div id='loading' style='display:none'> <img src='kyc/images/ajax-loader.gif' height='14'/> 程式載入中......</div>").appendTo("body");
+        setupRestore();
+        var li = '';
+        $(document.body).on('click', '.del' ,function(){
+          // 按到上傳照片頁面照片右邊的 X 按鈕(移除或刪除主機內照片)
+          li = $(this).parent();
+          kyc_csn =$(this).parent().attr('data-kyc-csn');
+          if(kyc_csn == "NONE"){
+            $('#sterge>p').html("你確定要移出照片嗎?");
+          }else{
+            $('#sterge>p').html("你確定刪除主機內照片嗎?");
+          }
+          $('#sterge').popup("open"); // 顯現 訊息視窗
+          $.mobile.fixedToolbars.show(true);//
+        });
+
+        $(document.body).on('click', '#delButton' ,function(){
+            // 上傳照片頁面移除照片 訊息視窗回 是
+            $('#sterge').popup("close");
+            if(kyc_csn == "NONE"){
+              li.remove();
+            }else{
+              delWebPic(kyc_csn);
+              setTimeout(function() {
+                if(ajax_msg == "SUCCESS") {
+                  li.remove();
+                } else{
+                  alert("刪除失敗\n"+ ajax_msg)
+                }
+              }, 500);
+            }
+        });
+
+        $(document.body).on('click', '#giveupButton' ,function(){
+            $('#sterge').popup("close"); // 上傳照片頁面移除照片 訊息視窗回 否
+        });
+
+
+        $("#setupSend").click(function() {
+           setupSave(); // 儲存 手機的設定資料
+        });
+        $("#btn20a").click(function() {
+           tadFormSave(); // 新增(修改) tad_form 問卷的填寫資料
+        });
+
+        $("#takePic").click(function() {
+           capturePhoto(); // 拍照片(暫時不提供給使用者)
+        });
+
+        $("#selePic").click(function() {
+           getPhoto2(); // 選照片
+        });
+
+        $("#uploadPic").click(function() {
+           upload(); // 上傳照片
+        });
+
+        pictureSource=navigator.camera.PictureSourceType;
+        destinationType=navigator.camera.DestinationType;
+        showPhoneInfo();
+        $("#closeApp").click(function() {
+           exitApp();
+        });
+        document.addEventListener("backbutton", exitApp , false); //返回键
+        $('#loading').hide();
+       }
+
+     </script>
+  </head>
+  <body  onload="onLoad()">
+   <div data-role="page" id ="home">
+     <div data-role="header">
+       <a href="#" id="closeApp" data-icon="arrow-l" class="ui-btn-left" >結束</a>
+       <h1>使用者登錄</h1>
+       <a href="#register"  data-icon="gear" class="ui-btn-right" >註冊</a>
+     </div>
+
+     <div data-role="content">
+       <div id="loadingIMG" style="display:none"><img src="kyc/images/ajax-loader.gif" height='14'/>資料處理中，請稍後。</div>
+       <form name="form1"   data-ajax="false">
+         <div id="userDiv" data-role="fieldcontain">
+           帳號：<input type="text" name="uname" id="uname" />
+         </div>
+         <div id="passDiv" data-role="fieldcontain">
+           密碼：<input type="password" name="pass" id="pass"/>
+         </div>
+         <div id="btnDiv" data-role="fieldcontain">
+          <button type="button" name="send" id="send"  onClick="login_chk();">登入</button>
+         </div>
+         <div id="showmsg" data-role="fieldcontain">      </div>
+       </form>
+     </div>
+
+     <div data-role="footer" data-id="main" data-position="fixed">
+       <div data-role="navbar">
+         <ul>
+           <li><a href="#setup">設定</a></li>
+           <li><a href="#about">關於</a></li>
+         </ul>
+       </div>
+       <h1>設計：&nbsp 育將電腦 &nbsp&nbsp 0921-5604xx</h1>
+     </div>
+   </div>
+
+   <div data-role="page" id ="show1">
+     <div data-role="header">
+       <a href="#home"  data-icon="arrow-l" class="ui-btn-left" >上頁</a>
+       <h1>問卷調查總表</h1>
+     </div>
+
+     <div data-role="content" style="min-height:100%;height:100%;margin:2px;padding:2px;">
+      <div id="show1LoadingIMG" style="display:none"><img src="kyc/images/ajax-loader.gif" height='14'/>資料處理中，請稍後。</div>
+       <ul data-role="listview"  id="lv01">
+       </ul>
+     </div>
+
+   </div>
+
+   <div data-role="page" id ="question2">
+     <div data-role="header"  data-position="fixed">
+       <a href="#show1"  data-icon="arrow-l" class="ui-btn-back" >上頁</a>
+       <h1>填寫調查表</h1>
+       <a href="" id="btn20a" data-icon="plus" class="ui-btn-right" >新增</a>
+     </div>
+     <div data-role="content" class="ui-content">
+      <div id="question2LoadingIMG" style="display:none"><img src="kyc/images/ajax-loader.gif" height='14'/>資料處理中，請稍後。</div>
+       <div id="201Label" > </div>
+       <ul data-role="listview"  id="lv02" data-inset="true" data-shadow="false">
+       </ul>
+     </div>
+
+   </div>
+
+   <div data-role="page" id ="upload3">
+     <div data-role="header"  data-position="fixed">
+       <a href="#show1"  data-icon="arrow-l" class="ui-btn-left" >上頁</a>
+       <h1>上傳照片</h1>
+     </div>
+
+     <div data-role="content" class="ui-content">
+        <div id="upload3LoadingIMG" style="display:none"><img src="images/ajax-loader.gif"
+          height='14'/>資料處理中，請稍後。</div>
+        <div id="301Label"> </div>
+        <div id="302Label"> </div>
+        <div id="303Label"> </div>
+        <div id="304sele" data-role="main" class="ui-content"> </div>
+        <ul id="lv03" data-role="listview"   data-split-icon="delete" data-inset="true">
+        </ul>
+
+        <div data-role="popup" id="sterge"  class="ui-content" style="max-width:500px;
+             padding-bottom:2em;">
+            <p>你確定要移出照片嗎?</p>
+            <input id="delButton" data-inline="true" data-mini="true" data-icon="check" type="button" value="是" />
+            <input id="giveupButton" data-inline="true" data-mini="true" data-icon="delete" type="button" value="否" />
+        </div>
+     </div>
+
+     <div data-role="footer" data-position="fixed">
+         <a href="" id ="takePic" class="ui-btn ui-corner-all ui-shadow ui-icon-camera ui-btn-icon-left" style="display:none">拍照</a>
+         <a href="" id ="selePic" class="ui-btn ui-corner-all ui-shadow ui-icon-camera ui-btn-icon-left">選照片</a>
+
+         <a href="">　　　</a>
+
+         <a href="" id="uploadPic" class="ui-btn ui-corner-all ui-shadow ui-icon-cloud ui-btn-icon-left">上傳</a>
+     </div>
+   </div>
+
+   <div data-role="page" id ="register" >
+     <div data-role="header" data-add-back-btn="true" >
+       <h1>手機序號註冊</h1>
+     </div>
+     <div data-role="content">
+       <div id="loadingIMG2" style="display:none"><img src="kyc/images/ajax-loader.gif" height='14'/>資料處理中，請稍後。</div>
+       <form name="form2">
+        <div class="ui-field-contain">
+             <label for="serial2">序號:</label>
+             <input type="text" disabled="disabled" style="color:red;font-weight:bold;" name="serial2" id="serial2" value="">
+
+              <label for="uname2">帳號:</label>
+              <input type="text"  name="uname2" id="uname2" value="">
+
+              <label for="pass2">密碼:</label>
+              <input type="password"  name="pass2" id="pass2" value="">
+         </div>
+         <div id="btnDiv" data-role="fieldcontain">
+          <button type="button" name="send2" id="send2"  onClick="register_check();">註冊</button>
+         </div>
+         <div id="showmsg2" data-role="fieldcontain">      </div>
+       </form>
+     </div>
+   </div>
+
+   <div data-role="page" id ="setup">
+     <div data-role="header" data-add-back-btn="true" >
+       <h1>系統功能設定</h1>
+     </div>
+     <div role="main" class="ui-content">
+       <div class="ui-field-contain">
+         <label for="rUser">記住帳號:</label>
+         <input type="text" name="rUser" id="rUser">
+         <label for="rPass">記住密碼:</label>
+         <input type="password"  name="rPass" id="rPass">
+       </div>
+       <div>
+         <button type="button" name="setupSend" id="setupSend">儲存</button>
+       </div>
+     </div>
+   </div>
+
+   <div data-role="page" id ="about">
+     <div data-role="header" data-add-back-btn="true" >
+       <h1>關於我們</h1>
+     </div>
+     <div data-role="content">
+      <div> <p id="deviceProperties">手機資訊.....</p> </div>
+     </div>
+   </div>
+  </body>
+</html>
